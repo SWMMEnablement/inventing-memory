@@ -1,5 +1,5 @@
-// Bipolar Hopfield network with decaying weights.
-// Patterns are flattened bitmaps of -1 / +1.
+// Bipolar Hopfield network with decaying weights, inhibition, and
+// online retraining ("self-rewriting") — feed spurious attractors back in.
 
 export type Pattern = Int8Array;
 
@@ -7,6 +7,9 @@ export class Hopfield {
   readonly n: number;
   W: Float32Array;
   readonly W0: Float32Array;
+  /** Effective # of stored patterns (grows when we retrain on hallucinations) */
+  m: number;
+
 
   constructor(patterns: Pattern[]) {
     const n = patterns[0].length;
