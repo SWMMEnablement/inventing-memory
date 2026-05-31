@@ -1,5 +1,5 @@
-// Bipolar Hopfield network with decaying weights.
-// Patterns are flattened bitmaps of -1 / +1.
+// Bipolar Hopfield network with decaying weights, inhibition, and
+// online retraining ("self-rewriting") — feed spurious attractors back in.
 
 export type Pattern = Int8Array;
 
@@ -7,6 +7,9 @@ export class Hopfield {
   readonly n: number;
   W: Float32Array;
   readonly W0: Float32Array;
+  /** Effective # of stored patterns (grows when we retrain on hallucinations) */
+  m: number;
+
 
   constructor(patterns: Pattern[]) {
     const n = patterns[0].length;
@@ -23,6 +26,34 @@ export class Hopfield {
     }
     this.W = W;
     this.W0 = new Float32Array(W);
+    this.m = patterns.length;
+  }
+
+  /** Add a new pattern to the weight matrix (online Hebbian). */
+  imprint(p: Pattern, strength = 1): void {
+    const { n, W } = this;
+    const s = strength / Math.max(this.m + 1, 1);
+    for (let i = 0; i < n; i++) {
+      const pi = p[i];
+      const row = i * n;
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        W[row + j] += s * pi * p[j];
+      }
+    }
+    this.m += 1;
+  }
+
+  /** Energy E = -½ sᵀWs */
+  energy(s: Int8Array): number {
+    const { n, W } = this;
+    let e = 0;
+    for (let i = 0; i < n; i++) {
+      const si = s[i];
+      const row = i * n;
+      for (let j = 0; j < n; j++) e += W[row + j] * si * s[j];
+    }
+    return -0.5 * e;
   }
 
   /** Asynchronous (random order) recall. Mutates and returns `state`. */
