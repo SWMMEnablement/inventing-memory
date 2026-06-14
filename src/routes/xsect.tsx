@@ -176,24 +176,24 @@ function XSectPage() {
           <div className="h-[420px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rows} margin={{ top: 12, right: 16, bottom: 8, left: 0 }}>
-                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 4" />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="2 4" />
                 <XAxis
                   dataKey="y"
                   type="number"
                   domain={[0, 1]}
                   tickFormatter={(v) => v.toFixed(2)}
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="var(--ink-soft)"
                   tick={{ fontSize: 11, fontFamily: "JetBrains Mono" }}
                 />
                 <YAxis
                   domain={[0, 1.25]}
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="var(--ink-soft)"
                   tick={{ fontSize: 11, fontFamily: "JetBrains Mono" }}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--border))",
+                    background: "var(--paper)",
+                    border: "1px solid var(--border)",
                     fontFamily: "JetBrains Mono",
                     fontSize: 12,
                   }}
@@ -205,17 +205,17 @@ function XSectPage() {
                 />
                 <ReferenceLine
                   x={rPeak.y}
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="var(--ink-soft)"
                   strokeDasharray="3 3"
                   label={{ value: "R peak", position: "top", fontSize: 10 }}
                 />
                 <ReferenceLine
                   x={sPeak.y}
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="var(--ink-soft)"
                   strokeDasharray="3 3"
                   label={{ value: "Q peak", position: "top", fontSize: 10 }}
                 />
-                <ReferenceLine y={1} stroke="hsl(var(--border))" />
+                <ReferenceLine y={1} stroke="var(--border)" />
                 <Line dataKey="A" name="A / A_full" stroke="#60a5fa" dot={false} strokeWidth={2} />
                 <Line dataKey="R" name="R / R_full" stroke="#f59e0b" dot={false} strokeWidth={2} />
                 <Line dataKey="W" name="W / W_max" stroke="#a78bfa" dot={false} strokeWidth={2} />
