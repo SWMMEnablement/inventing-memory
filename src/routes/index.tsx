@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Hopfield, nearest } from "@/lib/hopfield";
 import {
@@ -211,8 +211,16 @@ function Index() {
         <header className="border-b border-rule pb-8">
           <div className="flex items-baseline justify-between gap-6 text-[11px] uppercase tracking-[0.2em] text-ink-soft">
             <span>experiment 005 · swmm5 / hopfield</span>
-            <span>
-              n={N} · m={net.m} · α={alpha.toFixed(3)}
+            <span className="flex items-center gap-4">
+              <span>
+                n={N} · m={net.m} · α={alpha.toFixed(3)}
+              </span>
+              <Link
+                to="/xsect"
+                className="border-b border-dotted border-ink-soft pb-0.5 hover:text-ink"
+              >
+                xsect engine →
+              </Link>
             </span>
           </div>
           <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-tight md:text-7xl">
