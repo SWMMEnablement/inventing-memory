@@ -1,0 +1,5 @@
+# Project decisions
+
+- AI features call the Lovable AI Gateway through a streaming server route (`src/routes/api/interpret-glyph.ts`) backed by `src/lib/ai/interpret.server.ts`; gateway helpers (run-ID fetch wrapper) live in `src/lib/ai/run-id.ts`. Why: notes stream to the browser, and server routes own raw HTTP streaming while `createServerFn` cannot return streams.
+- The Hopfield simulation's "creative regime" is calibrated, not accidental: decay both fades weights toward zero and adds noise (`fade = σ·0.5`, `noise = σ·0.5` in `Hopfield.decay`), recall is stochastic at temperature 1.5 (`recallNoisy`), and the hallucination threshold is 10 Hamming bits. Why: deterministic recall into 14 correlated blob-like basins never drifts more than ~5 bits, so the page's hallucination premise required fading weights plus thermal recall; changing any of these constants re-breaks it.
+- Pure simulation/geometry code stays in framework-free modules (`src/lib/hopfield.ts`, `src/lib/glyphs.ts`, `src/lib/swmm/`) with zero React imports, so the same kernel can feed other apps. Why: the project brief calls for one verified geometry kernel reused across tools.

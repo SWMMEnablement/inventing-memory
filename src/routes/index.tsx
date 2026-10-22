@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
 });
 
 const N_CELLS = 16;
-const HALL_THRESHOLD = 14; // hamming bits away from any taught shape = hallucination
+const HALL_THRESHOLD = 10; // hamming bits away from any taught shape = hallucination
 
 // names assigned to invented cross-sections
 const INVENTED = [
@@ -71,7 +71,7 @@ function Index() {
   const net = useMemo(() => new Hopfield(PATTERNS), []);
   const [tick, setTick] = useState(0);
   const [running, setRunning] = useState(true);
-  const [decay, setDecay] = useState(0.010);
+  const [decay, setDecay] = useState(0.016);
   const [reseed, setReseed] = useState(0.20);
   const [selfRewrite, setSelfRewrite] = useState(false);
   const [inhibit, setInhibit] = useState(true);
@@ -80,6 +80,9 @@ function Index() {
   const energyRef = useRef<number[]>([]);
   const energyCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [, force] = useState(0);
+  const [notes, setNotes] = useState<Record<number, { label: string; text: string }>>({});
+  const [annotating, setAnnotating] = useState(false);
+  const [annotateError, setAnnotateError] = useState<string | null>(null);
 
   // init cells
   useEffect(() => {
@@ -139,7 +142,7 @@ function Index() {
             }
           }
 
-          net.recall(c.state, 2);
+          net.recallNoisy(c.state, 1.5);
 
           const near = nearest(c.state, PATTERNS);
           const halluc = near.dist > HALL_THRESHOLD;
@@ -199,6 +202,62 @@ function Index() {
   const drift = net.drift();
   const alpha = net.m / N;
   const hallucinating = cellsRef.current.filter((c) => c.isHallucination).length;
+
+  const annotate = useCallback(async () => {
+    const cells = cellsRef.current;
+    const targets = cells
+      .map((c, i) => ({ c, i }))
+      .filter(({ c }) => c.isHallucination);
+    if (targets.length === 0 || annotating) return;
+    setAnnotating(true);
+    setAnnotateError(null);
+    for (const { c, i } of targets) {
+      const near = nearest(c.state, PATTERNS);
+      const rows: string[] = [];
+      for (let gy = 0; gy < GLYPH_H; gy++) {
+        let row = "";
+        for (let gx = 0; gx < GLYPH_W; gx++) {
+          row += c.state[gy * GLYPH_W + gx] === 1 ? "#" : ".";
+        }
+        rows.push(row);
+      }
+      try {
+        const res = await fetch("/api/interpret-glyph", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label: c.label,
+            rows,
+            nearestShape: SHAPES[near.idx],
+            hammingDist: near.dist,
+            gridSize: GLYPH_W,
+            drift: net.drift(),
+          }),
+        });
+        if (!res.ok || !res.body) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || `request failed (${res.status})`);
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let text = "";
+        setNotes((prev) => ({ ...prev, [i]: { label: c.label, text: "" } }));
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          text += decoder.decode(value, { stream: true });
+          const t = text;
+          setNotes((prev) => ({ ...prev, [i]: { label: c.label, text: t } }));
+        }
+      } catch (err) {
+        setAnnotateError(
+          err instanceof Error ? err.message : "annotation failed",
+        );
+        break;
+      }
+    }
+    setAnnotating(false);
+  }, [annotating, net]);
 
   const ink = "oklch(0.18 0.02 60)";
   const paper = "oklch(0.965 0.012 85)";
@@ -263,8 +322,26 @@ function Index() {
             >
               relearn
             </button>
+            <button
+              onClick={annotate}
+              disabled={annotating || hallucinating === 0}
+              className="flex-1 border border-ink px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-ink transition-colors hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-40"
+              title={
+                hallucinating === 0
+                  ? "no hallucinated shapes to annotate yet"
+                  : "ask the AI to describe each invented shape"
+              }
+            >
+              {annotating ? "annotating…" : "annotate △"}
+            </button>
           </div>
         </section>
+
+        {annotateError && (
+          <p className="mt-3 border border-rule p-2 text-[11px] text-ink-soft">
+            AI annotation paused: {annotateError}
+          </p>
+        )}
 
         {/* Controls */}
         <section className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -340,6 +417,11 @@ function Index() {
                 >
                   {c.label}
                 </div>
+                {notes[i] && (
+                  <p className="border-t border-rule pt-1.5 text-[9px] normal-case leading-snug tracking-normal text-ink-soft">
+                    {notes[i].text}
+                  </p>
+                )}
               </article>
             ))}
           </div>
@@ -354,10 +436,12 @@ function Index() {
             ratio α = m/n places us inside the creative regime (≈ 0.1).
           </Note>
           <Note title="02 · the decay">
-            Each tick, Gaussian noise (σ) is added symmetrically to the weight
-            matrix. Energy valleys flatten; adjacent basins merge. Spurious
-            attractors form between stored shapes — mixture states that are
-            still simply-connected, still geometrically plausible.
+            Each tick, the weight matrix fades toward zero and Gaussian noise
+            (σ) is added symmetrically. Recall runs at a finite temperature, so
+            thinning weights let states wander. Energy valleys flatten; adjacent
+            basins merge. Spurious attractors form between stored shapes —
+            mixture states that are still simply-connected, still geometrically
+            plausible.
           </Note>
           <Note title="03 · the rewriting">
             With <em className="font-display not-italic">self-rewriting</em> on, hallucinated states are imprinted back
