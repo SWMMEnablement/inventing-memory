@@ -337,6 +337,12 @@ function Index() {
           </div>
         </section>
 
+        {annotateError && (
+          <p className="mt-3 border border-rule p-2 text-[11px] text-ink-soft">
+            AI annotation paused: {annotateError}
+          </p>
+        )}
+
         {/* Controls */}
         <section className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
           <Slider
