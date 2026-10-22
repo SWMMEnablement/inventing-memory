@@ -71,7 +71,7 @@ function Index() {
   const net = useMemo(() => new Hopfield(PATTERNS), []);
   const [tick, setTick] = useState(0);
   const [running, setRunning] = useState(true);
-  const [decay, setDecay] = useState(0.010);
+  const [decay, setDecay] = useState(0.016);
   const [reseed, setReseed] = useState(0.20);
   const [selfRewrite, setSelfRewrite] = useState(false);
   const [inhibit, setInhibit] = useState(true);
@@ -142,7 +142,7 @@ function Index() {
             }
           }
 
-          net.recall(c.state, 2);
+          net.recallNoisy(c.state, 1.0);
 
           const near = nearest(c.state, PATTERNS);
           const halluc = near.dist > HALL_THRESHOLD;
@@ -436,10 +436,12 @@ function Index() {
             ratio α = m/n places us inside the creative regime (≈ 0.1).
           </Note>
           <Note title="02 · the decay">
-            Each tick, Gaussian noise (σ) is added symmetrically to the weight
-            matrix. Energy valleys flatten; adjacent basins merge. Spurious
-            attractors form between stored shapes — mixture states that are
-            still simply-connected, still geometrically plausible.
+            Each tick, the weight matrix fades toward zero and Gaussian noise
+            (σ) is added symmetrically. Recall runs at a finite temperature, so
+            thinning weights let states wander. Energy valleys flatten; adjacent
+            basins merge. Spurious attractors form between stored shapes —
+            mixture states that are still simply-connected, still geometrically
+            plausible.
           </Note>
           <Note title="03 · the rewriting">
             With <em className="font-display not-italic">self-rewriting</em> on, hallucinated states are imprinted back
