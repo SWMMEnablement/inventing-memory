@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
 });
 
 const N_CELLS = 16;
-const HALL_THRESHOLD = 14; // hamming bits away from any taught shape = hallucination
+const HALL_THRESHOLD = 10; // hamming bits away from any taught shape = hallucination
 
 // names assigned to invented cross-sections
 const INVENTED = [
@@ -142,7 +142,7 @@ function Index() {
             }
           }
 
-          net.recallNoisy(c.state, 1.0);
+          net.recallNoisy(c.state, 1.5);
 
           const near = nearest(c.state, PATTERNS);
           const halluc = near.dist > HALL_THRESHOLD;

@@ -108,7 +108,7 @@ export class Hopfield {
    */
   decay(sigma: number) {
     const W = this.W;
-    const fade = sigma * 0.25;
+    const fade = sigma * 0.5;
     const noise = sigma * 0.5;
     for (let i = 0; i < W.length; i++) {
       // Box–Muller
