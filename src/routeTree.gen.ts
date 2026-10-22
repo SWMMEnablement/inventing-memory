@@ -9,17 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as XsectRouteImport } from './routes/xsect'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as XsectRouteImport } from './routes/xsect'
 
-const XsectRoute = XsectRouteImport.update({
-  id: '/xsect',
-  path: '/xsect',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const XsectRoute = XsectRouteImport.update({
+  id: '/xsect',
+  path: '/xsect',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -51,18 +51,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/xsect': {
-      id: '/xsect'
-      path: '/xsect'
-      fullPath: '/xsect'
-      preLoaderRoute: typeof XsectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/xsect': {
+      id: '/xsect'
+      path: '/xsect'
+      fullPath: '/xsect'
+      preLoaderRoute: typeof XsectRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
