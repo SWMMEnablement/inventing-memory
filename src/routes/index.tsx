@@ -322,6 +322,18 @@ function Index() {
             >
               relearn
             </button>
+            <button
+              onClick={annotate}
+              disabled={annotating || hallucinating === 0}
+              className="flex-1 border border-ink px-3 py-2 text-[11px] uppercase tracking-[0.2em] text-ink transition-colors hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-40"
+              title={
+                hallucinating === 0
+                  ? "no hallucinated shapes to annotate yet"
+                  : "ask the AI to describe each invented shape"
+              }
+            >
+              {annotating ? "annotating…" : "annotate △"}
+            </button>
           </div>
         </section>
 
@@ -399,6 +411,11 @@ function Index() {
                 >
                   {c.label}
                 </div>
+                {notes[i] && (
+                  <p className="border-t border-rule pt-1.5 text-[9px] normal-case leading-snug tracking-normal text-ink-soft">
+                    {notes[i].text}
+                  </p>
+                )}
               </article>
             ))}
           </div>
