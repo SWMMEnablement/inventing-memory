@@ -80,15 +80,42 @@ export class Hopfield {
     return state;
   }
 
-  /** Inject Gaussian noise into the weight matrix (irreversible decay). */
+  /** Stochastic (Boltzmann-style) recall at temperature T. Mutates `state`. */
+  recallNoisy(state: Int8Array, T: number): Int8Array {
+    const { n, W } = this;
+    const order = new Uint16Array(n);
+    for (let i = 0; i < n; i++) order[i] = i;
+    for (let i = n - 1; i > 0; i--) {
+      const k = (Math.random() * (i + 1)) | 0;
+      const t = order[i];
+      order[i] = order[k];
+      order[k] = t;
+    }
+    for (let k = 0; k < n; k++) {
+      const i = order[k];
+      let h = 0;
+      const row = i * n;
+      for (let j = 0; j < n; j++) h += W[row + j] * state[j];
+      const p = 1 / (1 + Math.exp((-2 * h) / T));
+      state[i] = Math.random() < p ? 1 : -1;
+    }
+    return state;
+  }
+
+  /**
+   * Erode the weight matrix: fade toward zero (memory loss) plus symmetric
+   * Gaussian noise. Irreversible — the alphabet genuinely thins out.
+   */
   decay(sigma: number) {
     const W = this.W;
+    const fade = sigma * 0.25;
+    const noise = sigma * 0.5;
     for (let i = 0; i < W.length; i++) {
       // Box–Muller
       const u1 = Math.random() || 1e-9;
       const u2 = Math.random();
       const g = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-      W[i] += g * sigma;
+      W[i] = W[i] * (1 - fade) + g * noise;
     }
     // keep symmetric-ish + zero diagonal
     const n = this.n;
