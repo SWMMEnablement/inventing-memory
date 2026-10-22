@@ -80,6 +80,9 @@ function Index() {
   const energyRef = useRef<number[]>([]);
   const energyCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [, force] = useState(0);
+  const [notes, setNotes] = useState<Record<number, { label: string; text: string }>>({});
+  const [annotating, setAnnotating] = useState(false);
+  const [annotateError, setAnnotateError] = useState<string | null>(null);
 
   // init cells
   useEffect(() => {
@@ -199,6 +202,62 @@ function Index() {
   const drift = net.drift();
   const alpha = net.m / N;
   const hallucinating = cellsRef.current.filter((c) => c.isHallucination).length;
+
+  const annotate = useCallback(async () => {
+    const cells = cellsRef.current;
+    const targets = cells
+      .map((c, i) => ({ c, i }))
+      .filter(({ c }) => c.isHallucination);
+    if (targets.length === 0 || annotating) return;
+    setAnnotating(true);
+    setAnnotateError(null);
+    for (const { c, i } of targets) {
+      const near = nearest(c.state, PATTERNS);
+      const rows: string[] = [];
+      for (let gy = 0; gy < GLYPH_H; gy++) {
+        let row = "";
+        for (let gx = 0; gx < GLYPH_W; gx++) {
+          row += c.state[gy * GLYPH_W + gx] === 1 ? "#" : ".";
+        }
+        rows.push(row);
+      }
+      try {
+        const res = await fetch("/api/interpret-glyph", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label: c.label,
+            rows,
+            nearestShape: SHAPES[near.idx],
+            hammingDist: near.dist,
+            gridSize: GLYPH_W,
+            drift: net.drift(),
+          }),
+        });
+        if (!res.ok || !res.body) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || `request failed (${res.status})`);
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let text = "";
+        setNotes((prev) => ({ ...prev, [i]: { label: c.label, text: "" } }));
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          text += decoder.decode(value, { stream: true });
+          const t = text;
+          setNotes((prev) => ({ ...prev, [i]: { label: c.label, text: t } }));
+        }
+      } catch (err) {
+        setAnnotateError(
+          err instanceof Error ? err.message : "annotation failed",
+        );
+        break;
+      }
+    }
+    setAnnotating(false);
+  }, [annotating, net]);
 
   const ink = "oklch(0.18 0.02 60)";
   const paper = "oklch(0.965 0.012 85)";

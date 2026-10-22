@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as XsectRouteImport } from './routes/xsect'
+import { Route as ApiInterpretGlyphRouteImport } from './routes/api/interpret-glyph'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const XsectRoute = XsectRouteImport.update({
   path: '/xsect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInterpretGlyphRoute = ApiInterpretGlyphRouteImport.update({
+  id: '/api/interpret-glyph',
+  path: '/api/interpret-glyph',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/xsect': typeof XsectRoute
+  '/api/interpret-glyph': typeof ApiInterpretGlyphRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/xsect': typeof XsectRoute
+  '/api/interpret-glyph': typeof ApiInterpretGlyphRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/xsect': typeof XsectRoute
+  '/api/interpret-glyph': typeof ApiInterpretGlyphRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/xsect'
+  fullPaths: '/' | '/xsect' | '/api/interpret-glyph'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/xsect'
-  id: '__root__' | '/' | '/xsect'
+  to: '/' | '/xsect' | '/api/interpret-glyph'
+  id: '__root__' | '/' | '/xsect' | '/api/interpret-glyph'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   XsectRoute: typeof XsectRoute
+  ApiInterpretGlyphRoute: typeof ApiInterpretGlyphRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof XsectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/interpret-glyph': {
+      id: '/api/interpret-glyph'
+      path: '/api/interpret-glyph'
+      fullPath: '/api/interpret-glyph'
+      preLoaderRoute: typeof ApiInterpretGlyphRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   XsectRoute: XsectRoute,
+  ApiInterpretGlyphRoute: ApiInterpretGlyphRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
